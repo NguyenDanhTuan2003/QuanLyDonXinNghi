@@ -1,0 +1,67 @@
+/* eslint-disable */
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+
+const UserSchema = new mongoose.Schema({
+  fullname: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { type: String, default: 'USER' },
+  status: { type: String, default: 'ACTIVE' },
+  phoneNumber: String,
+  dateOfBirth: String,
+  department: String,
+  position: String
+}, { timestamps: true });
+
+const User = mongoose.model('User', UserSchema);
+
+async function seed() {
+  try {
+    await mongoose.connect('mongodb://127.0.0.1:27017/leave-request');
+    console.log('Connected to MongoDB');
+
+    const users = [
+      {
+        fullname: 'Administrator',
+        email: 'admin@test.com',
+        password: await bcrypt.hash('123456', 10),
+        role: 'ADMIN',
+        department: 'Ban Giám Đốc',
+        position: 'Giám đốc'
+      },
+      {
+        fullname: 'User 1',
+        email: 'user1@test.com',
+        password: await bcrypt.hash('123456', 10),
+        role: 'USER',
+        department: 'Phòng Kỹ Thuật',
+        position: 'Nhân viên'
+      },
+      {
+        fullname: 'User 2',
+        email: 'user2@test.com',
+        password: await bcrypt.hash('123456', 10),
+        role: 'USER',
+        department: 'Phòng Kế Toán',
+        position: 'Nhân viên'
+      }
+    ];
+
+    for (const u of users) {
+      await User.findOneAndUpdate(
+        { email: u.email },
+        { $set: u },
+        { upsert: true, new: true }
+      );
+    }
+    
+    console.log('Mock data inserted successfully!');
+    process.exit(0);
+  } catch (error) {
+    console.error('Error seeding data:', error);
+    process.exit(1);
+  }
+}
+
+seed();

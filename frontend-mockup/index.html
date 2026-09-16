@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leave Request Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="user-profile">
+                <img src="https://i.pravatar.cc/150?img=47" alt="Alice Jensen" class="avatar">
+                <div class="user-info">
+                    <h3 class="name">Alice Jensen</h3>
+                    <p class="role">Senior HR Specialist</p>
+                    <span class="status"><span class="dot"></span>Active</span>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    Dashboard
+                </a>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    Leave Requests
+                </a>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    Calendar
+                </a>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    Employees
+                </a>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    Settings
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-header">
+                <h1 class="page-title">Leave Request Dashboard</h1>
+                <div class="header-actions">
+                    <div class="search-bar">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" placeholder="Search">
+                    </div>
+                    <button class="icon-btn">
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Stats & Action -->
+            <div class="dashboard-stats">
+                <div class="stat-card primary">
+                    <span class="stat-label">Leave Balance 2026</span>
+                    <h2 class="stat-value">18 days <span class="stat-sub">remaining</span></h2>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Approved Days</span>
+                    <h2 class="stat-value">14 days</h2>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Pending Requests</span>
+                    <h2 class="stat-value">1</h2>
+                </div>
+                
+                <button class="btn-create" id="btnCreateRequest">
+                    <span class="btn-subtitle">Create Leave Request</span>
+                    <span class="btn-title">+ NEW REQUEST</span>
+                </button>
+            </div>
+
+            <!-- Table Section -->
+            <section class="table-section">
+                <h2 class="section-title">Recent Leave Requests</h2>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- JS will populate this -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination">
+                    <button class="page-btn disabled">&lt;</button>
+                    <button class="page-btn active">1</button>
+                    <button class="page-btn">2</button>
+                    <button class="page-btn">10</button>
+                    <button class="page-btn">&gt;</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal (Hidden by default) -->
+    <div class="modal-overlay" id="createModal">
+        <div class="modal-content">
+            <h2 class="modal-title">Create Leave Request</h2>
+            <form id="leaveForm">
+                <div class="form-group">
+                    <label>Start Date</label>
+                    <input type="date" required>
+                </div>
+                <div class="form-group">
+                    <label>End Date</label>
+                    <input type="date" required>
+                </div>
+                <div class="form-group">
+                    <label>Reason</label>
+                    <textarea rows="3" required></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" id="btnCancel">Cancel</button>
+                    <button type="submit" class="btn-submit">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "apps/api-gateway/src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": true,
+    "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/api-gateway",
+  "defaultProject": "api-gateway",
+  "projects": {
+    "api-gateway": {
+      "type": "application",
+      "root": "apps/api-gateway",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-gateway/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
+      }
+    },
+    "approval-service": {
+      "type": "application",
+      "root": "apps/approval-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/approval-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/approval-service/tsconfig.app.json"
+      }
+    },
+    "leave_request-service": {
+      "type": "application",
+      "root": "apps/leave_request-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/leave_request-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/leave_request-service/tsconfig.app.json"
+      }
+    },
+    "user-service": {
+      "type": "application",
+      "root": "apps/user-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/user-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/user-service/tsconfig.app.json"
+      }
+    },
+    "commons": {
+      "type": "library",
+      "root": "libs/commons",
+      "entryFile": "index",
+      "sourceRoot": "libs/commons/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/commons/tsconfig.lib.json"
+      }
+    }
+  }
+}
