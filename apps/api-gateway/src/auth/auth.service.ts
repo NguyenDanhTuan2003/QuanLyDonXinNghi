@@ -12,6 +12,11 @@ export class AuthService {
     private config: ConfigService,
     private readonly natsClient: CustomNatsClient,
   ) {}
+
+  // vì nest sẽ nạp env trước khi mà constructor chạy nên phải get ở đây để lúc cần móc ra tránh trường hợp chưa nạp xong ô lại dùng
+  get isProduction() {
+    return this.config.get<string>('NODE_ENV') === 'production';
+  }
   async login(
     body: loginDto,
     @Res({ passthrough: true }) response: express.Response,
@@ -23,8 +28,9 @@ export class AuthService {
     response.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
       // Khi deploy (HTTPS), secure BẮT BUỘC = true, sameSite BẮT BUỘC = 'none'
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none',
+      secure: this.isProduction,
+      sameSite: this.isProduction ? 'none' : 'lax',
+      path: '/',
       maxAge: 60 * 60 * 24 * 7 * 1000,
     });
 
@@ -47,8 +53,9 @@ export class AuthService {
     if (tokens?.refreshToken) {
       response.cookie('refreshToken', tokens.refreshToken, {
         httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
+        secure: this.isProduction,
+        sameSite: this.isProduction ? 'none' : 'lax',
+        path: '/',
         maxAge: 60 * 60 * 24 * 7 * 1000,
       });
     }

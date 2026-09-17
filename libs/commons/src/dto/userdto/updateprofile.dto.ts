@@ -1,5 +1,11 @@
-import { IsString, IsOptional, IsPhoneNumber } from 'class-validator';
-import { Transform, TransformFnParams } from 'class-transformer';
+import {
+  IsString,
+  IsOptional,
+  IsPhoneNumber,
+  IsDate,
+  MaxDate,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 export class updateProfileDto {
   @IsOptional()
   @IsString({ message: 'Tên phải là chuỗi' })
@@ -20,9 +26,8 @@ export class updateProfileDto {
   phoneNumber?: string;
 
   @IsOptional()
-  @Transform(({ value }: TransformFnParams) => {
-    if (!value) return undefined;
-    return new Date(value as string | Date | number);
-  })
+  @Type(() => Date)
+  @IsDate({ message: 'Ngày sinh không hợp lệ' })
+  @MaxDate(new Date(), { message: 'Ngày sinh phải là ngày trong quá khứ' })
   dateOfBirth?: Date;
 }

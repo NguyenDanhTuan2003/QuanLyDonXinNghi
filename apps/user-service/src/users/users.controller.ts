@@ -36,9 +36,4 @@ export class UsersController {
   async getUsersBatch(@Payload() data: { userIds: string[] }) {
     return await this.usersService.findUsersByIds(data.userIds);
   }
-
-  @MessagePattern('users.find_by_email')
-  async findByEmail(@Payload() data: { email: string }) {
-    return await this.usersService.findByEmail(data.email);
-  }
 }

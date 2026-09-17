@@ -26,7 +26,7 @@ import { CustomWinstonLogger } from '@app/commons';
 
 @Injectable()
 export class LeaveRequestServiceService implements OnModuleInit {
-  private readonly logger = new CustomWinstonLogger();
+  // vì provide trong loggermodule được khai báo là 1 class nest hiểu được nên k cần @inject như redis
   // hàm onModuleInit chạy lần đầu khi app khởi động xong custom lại để nó chạy 2 hàm dưới cho nso quest db trc khi chạy app
   onModuleInit() {
     // Chạy định kỳ mỗi đêm lúc 00:00 (hoặc chạy mỗi 1 tiếng = 3600000ms để đảm bảo)
@@ -52,6 +52,7 @@ export class LeaveRequestServiceService implements OnModuleInit {
   }
 
   constructor(
+    private readonly logger: CustomWinstonLogger,
     @InjectModel(LeaveRequest.name)
     private readonly leaveRequestModel: Model<LeaveRequestDocument>,
     private readonly natsClient: CustomNatsClient,
