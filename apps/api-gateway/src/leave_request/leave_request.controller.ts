@@ -17,6 +17,8 @@ import { RoleGuard } from '@app/commons';
 import { Roles } from '@app/commons/decorators/roles.decorator';
 import { Role } from '@app/commons/enums/guard/role.enum';
 import { LeaveRequestCancelDto } from '@app/commons/dto/leave_requestdto/leave_requestCancel.dto';
+import { Adminpayloadleave_reqDto } from '@app/commons';
+
 @Controller('api/leave-request')
 export class LeaveRequestController {
   constructor(private readonly natsClient: CustomNatsClient) {}
@@ -49,22 +51,8 @@ export class LeaveRequestController {
   @UseGuards(AccessTokenGuard, RoleGuard)
   @Roles(Role.ADMIN)
   @Get('admin/getall')
-  getLeaveRequestByAdmin(
-    @Query('page') page: number,
-    @Query('sortby') sortby: string,
-    @Query('status') status: string,
-    @Query('userId') userId: string,
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
-  ) {
-    return this.natsClient.send('admin_leave_request.getall', {
-      userId,
-      page,
-      sortby,
-      status,
-      startDate,
-      endDate,
-    });
+  getLeaveRequestByAdmin(@Query() query: Adminpayloadleave_reqDto) {
+    return this.natsClient.send('admin_leave_request.getall', query);
   }
 
   @UseGuards(AccessTokenGuard)

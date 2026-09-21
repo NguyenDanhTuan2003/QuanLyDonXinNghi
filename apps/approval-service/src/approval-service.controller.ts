@@ -1,7 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { ApprovalServiceService } from './approval-service.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { userDto } from '@app/commons/dto/userdto/user.dto';
 import { AdminApprovePayloadDto } from '@app/commons/dto/aprovaldto/admin_approve_payload.dto';
 import { AdminRejectPayloadDto } from '@app/commons/dto/aprovaldto/admin_reject_payload.dto';
 
@@ -21,8 +20,8 @@ export class ApprovalServiceController {
   }
 
   @MessagePattern('admin.getall.approval')
-  async getallapproval(@Payload() user: userDto) {
-    return this.approvalServiceService.getallaproval(user);
+  async getallapproval() {
+    return this.approvalServiceService.getallaproval();
   }
 
   @MessagePattern('admin.reject.request')

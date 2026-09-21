@@ -1,9 +1,9 @@
 import {
   IsString,
   IsOptional,
-  IsPhoneNumber,
   IsDate,
   MaxDate,
+  Matches,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 export class updateProfileDto {
@@ -19,10 +19,11 @@ export class updateProfileDto {
   //   return new Date(value as string | Date | number);
   // })
   // expiresAt?: Date;
-  @IsPhoneNumber('VN', {
-    message: 'Số điện thoại không hợp lệ',
-  })
   @IsOptional()
+  @Matches(/^(\+84|0[35789])[0-9]{8}$/, {
+    message:
+      'Số điện thoại không đúng định dạng (VD: 0912345678 hoặc +84323456789)',
+  })
   phoneNumber?: string;
 
   @IsOptional()

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
+import { Server } from 'http';
 import { LeaveRequestServiceModule } from './../src/leave_request-service.module';
 
 describe('LeaveRequestServiceController (e2e)', () => {
@@ -16,7 +17,7 @@ describe('LeaveRequestServiceController (e2e)', () => {
   });
 
   it('/ (GET)', () => {
-    return request(app.getHttpServer())
+    return request(app.getHttpServer() as Server)
       .get('/')
       .expect(200)
       .expect('Hello World!');

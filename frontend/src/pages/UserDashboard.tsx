@@ -118,10 +118,19 @@ const UserDashboard = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      // Gọi xuống Backend để ném Token vào Blacklist
+      await axiosClient.post('/auth/logout'); 
+    } catch (error) {
+      console.error("Lỗi khi đăng xuất:", error);
+    } finally {
+      // Bất kể API gọi thành công hay thất bại thì vẫn xóa phiên ở Web và đẩy ra ngoài
+      localStorage.clear();
+      navigate('/login');
+    }
   };
+
 
   const handleCreateRequest = async (e: React.FormEvent) => {
     e.preventDefault();

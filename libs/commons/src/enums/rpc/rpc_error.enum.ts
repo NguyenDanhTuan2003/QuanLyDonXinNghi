@@ -113,4 +113,9 @@ export const ALL_CUSTOM_RPC_ERRORS = {
     message:
       'Không thể hủy đơn này vì đơn đã được xử lý hoặc không còn ở trạng thái chờ duyệt',
   },
+  LEAVE_REQUEST_INVALID_DATE_FILTER: {
+    statusCode: 400,
+    message:
+      'Bộ lọc thời gian không hợp lệ: startDate không được lớn hơn endDate',
+  },
 } as const;

@@ -43,7 +43,9 @@ const AdminDashboard = () => {
   const [sortBy, setSortBy] = useState('desc');
   const [filterUserId, setFilterUserId] = useState('');
   const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterStartDateOp, setFilterStartDateOp] = useState('gte');
   const [filterEndDate, setFilterEndDate] = useState('');
+  const [filterEndDateOp, setFilterEndDateOp] = useState('lte');
 
   // Modal từ chối
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
@@ -101,14 +103,29 @@ const AdminDashboard = () => {
     sort = sortBy,
     userId = filterUserId,
     startDate = filterStartDate,
-    endDate = filterEndDate
+    endDate = filterEndDate,
+    startOp = filterStartDateOp,
+    endOp = filterEndDateOp
   ) => {
     try {
+      if (startDate && endDate && new Date(startDate).getTime() > new Date(endDate).getTime()) {
+        alert('Ngày bắt đầu phải trước ngày kết thúc');
+        return;
+      }
+      
       const params: any = { page, sortby: sort };
       if (status) params.status = status;
       if (userId) params.userId = userId;
-      if (startDate) params.startDate = startDate;
-      if (endDate) params.endDate = endDate;
+      
+      if (startDate) {
+        if (startOp === 'eq') params.startDate = startDate;
+        else params.startDate = JSON.stringify({ [startOp]: startDate });
+      }
+      
+      if (endDate) {
+        if (endOp === 'eq') params.endDate = endDate;
+        else params.endDate = JSON.stringify({ [endOp]: endDate });
+      }
 
       const response = await axiosClient.get('/leave-request/admin/getall', { params });
       const payload = response.data.data || response.data;
@@ -139,10 +156,19 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      // Gọi xuống Backend để ném Token vào Blacklist
+      await axiosClient.post('/auth/logout'); 
+    } catch (error) {
+      console.error("Lỗi khi đăng xuất:", error);
+    } finally {
+      // Bất kể API gọi thành công hay thất bại thì vẫn xóa phiên ở Web và đẩy ra ngoài
+      localStorage.clear();
+      navigate('/login');
+    }
   };
+
 
   const handleViewRequestDetail = (req: any) => {
     setRequestDetailData(req);
@@ -306,22 +332,44 @@ const AdminDashboard = () => {
                 />
               </div>
               <div className="control-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.875rem', color: '#374151', fontWeight: 500, whiteSpace: 'nowrap' }}>Từ ngày:</label>
-                <input 
-                  type="date"
-                  style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid #e5e7eb', outline: 'none' }}
-                  value={filterStartDate} 
-                  onChange={(e) => setFilterStartDate(e.target.value)}
-                />
+                <label style={{ fontSize: '0.875rem', color: '#374151', fontWeight: 500, whiteSpace: 'nowrap' }}>Bắt đầu:</label>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <select 
+                    style={{ padding: '0.5rem', borderRadius: '8px 0 0 8px', border: '1px solid #e5e7eb', borderRight: 'none', outline: 'none', background: '#f3f4f6', cursor: 'pointer' }}
+                    value={filterStartDateOp}
+                    onChange={(e) => setFilterStartDateOp(e.target.value)}
+                  >
+                    <option value="gte">&ge;</option>
+                    <option value="lte">&le;</option>
+                    <option value="eq">=</option>
+                  </select>
+                  <input 
+                    type="date"
+                    style={{ padding: '0.5rem', borderRadius: '0 8px 8px 0', border: '1px solid #e5e7eb', outline: 'none' }}
+                    value={filterStartDate} 
+                    onChange={(e) => setFilterStartDate(e.target.value)}
+                  />
+                </div>
               </div>
               <div className="control-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.875rem', color: '#374151', fontWeight: 500, whiteSpace: 'nowrap' }}>Đến ngày:</label>
-                <input 
-                  type="date"
-                  style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid #e5e7eb', outline: 'none' }}
-                  value={filterEndDate} 
-                  onChange={(e) => setFilterEndDate(e.target.value)}
-                />
+                <label style={{ fontSize: '0.875rem', color: '#374151', fontWeight: 500, whiteSpace: 'nowrap' }}>Kết thúc:</label>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <select 
+                    style={{ padding: '0.5rem', borderRadius: '8px 0 0 8px', border: '1px solid #e5e7eb', borderRight: 'none', outline: 'none', background: '#f3f4f6', cursor: 'pointer' }}
+                    value={filterEndDateOp}
+                    onChange={(e) => setFilterEndDateOp(e.target.value)}
+                  >
+                    <option value="lte">&le;</option>
+                    <option value="gte">&ge;</option>
+                    <option value="eq">=</option>
+                  </select>
+                  <input 
+                    type="date"
+                    style={{ padding: '0.5rem', borderRadius: '0 8px 8px 0', border: '1px solid #e5e7eb', outline: 'none' }}
+                    value={filterEndDate} 
+                    onChange={(e) => setFilterEndDate(e.target.value)}
+                  />
+                </div>
               </div>
               <div className="control-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <label style={{ fontSize: '0.875rem', color: '#374151', fontWeight: 500, whiteSpace: 'nowrap' }}>Trạng thái:</label>

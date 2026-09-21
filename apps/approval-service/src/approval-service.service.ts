@@ -7,8 +7,7 @@ import {
   ApprovalStatus,
 } from './schemas/approval.schema';
 import { IUser } from '@app/commons/interfaces/user.interface';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
+
 import { createRpcError } from '@app/commons/helpers/throw_nat_custom';
 import { CustomNatsClient } from '@app/commons/custom_natsclient_traceid/custom-nats.client';
 import { approval_request_saveDB_dto } from '@app/commons/dto/aprovaldto/approval_request_saveDB.dto';
@@ -21,8 +20,6 @@ export class ApprovalServiceService {
     @InjectModel(Approval.name)
     private readonly approvalRequestModel: Model<ApprovalRequestDocument>,
     private readonly natsClient: CustomNatsClient,
-    @InjectQueue('approval-expiration-queue')
-    private approvalQueue: Queue,
   ) {}
 
   async approvalrequest(data: approval_request_saveDB_dto) {
@@ -127,28 +124,29 @@ export class ApprovalServiceService {
           ...update_data,
           message: response_nats,
         };
-      } else {
-        // Vì đã check delay <= 0 ở trên, xuống đến đây chắc chắn delay > 0
-        const pull_response = await this.approvalQueue.add(
-          'process-expiration',
-          update_data, // Dữ liệu payload lưu trên Redis
-          {
-            attempts: 5, // Thử lại tối đa 5 lần
-            backoff: {
-              type: 'exponential',
-              delay: 5000,
-            },
-            delay: delay,
-            jobId: `approval-${data._id.toString()}`, // Tránh trùng lặp Job (Idempotent)
-            removeOnComplete: true,
-            removeOnFail: false,
-          },
-        );
-        return {
-          message: `Đã duyệt thành công và gửi yêu cầu sửa tới service "${data.messageName}" (Đơn ID: ${update_data._id})`,
-          pull_response,
-        };
       }
+      //  else {
+      //   // Vì đã check delay <= 0 ở trên, xuống đến đây chắc chắn delay > 0
+      //   const pull_response = await this.approvalQueue.add(
+      //     'process-expiration',
+      //     update_data, // Dữ liệu payload lưu trên Redis
+      //     {
+      //       attempts: 5, // Thử lại tối đa 5 lần
+      //       backoff: {
+      //         type: 'exponential',
+      //         delay: 5000,
+      //       },
+      //       delay: delay,
+      //       jobId: `approval-${data._id.toString()}`, // Tránh trùng lặp Job (Idempotent)
+      //       removeOnComplete: true,
+      //       removeOnFail: false,
+      //     },
+      //   );
+      //   return {
+      //     message: `Đã duyệt thành công và gửi yêu cầu sửa tới service "${data.messageName}" (Đơn ID: ${update_data._id})`,
+      //     pull_response,
+      //   };
+      // }
     }
 
     return {
@@ -157,10 +155,7 @@ export class ApprovalServiceService {
     };
   }
 
-  async getallaproval(user: IUser) {
-    if (user.role !== 'ADMIN') {
-      throw createRpcError(ALL_CUSTOM_RPC_ERRORS.APPROVAL_FORBIDDEN);
-    }
+  async getallaproval() {
     return this.approvalRequestModel.find({ status: ApprovalStatus.PENDING });
   }
 
@@ -193,9 +188,6 @@ export class ApprovalServiceService {
     user: IUser,
     rejectReason: string,
   ) {
-    if (user.role !== 'ADMIN') {
-      throw createRpcError(ALL_CUSTOM_RPC_ERRORS.APPROVAL_FORBIDDEN);
-    }
     const check_status = await this.approvalRequestModel.findById(id);
     if (check_status?.status !== ApprovalStatus.PENDING) {
       throw createRpcError(ALL_CUSTOM_RPC_ERRORS.APPROVAL_ALREADY_PROCESSED);
@@ -230,37 +222,38 @@ export class ApprovalServiceService {
           ...update_data,
           message: 'Đã từ chối đơn thành công',
         };
-      } else {
-        const delay = new Date(data.expiresAt).getTime() - Date.now();
-        if (delay > 0) {
-          return {
-            ...update_data,
-            message: 'Đã từ chối đơn còn hạn thành công',
-          };
-        } else {
-          const reject_data = await this.approvalRequestModel.findByIdAndUpdate(
-            { _id: id },
-            {
-              status: ApprovalStatus.CANCELLED,
-              rejectReason: 'Đơn hết hạn xác nhận',
-            },
-            { new: true, lean: true },
-          );
-
-          update_data.status = ApprovalStatus.CANCELLED;
-          update_data.rejectReason = 'Đơn hết hạn xác nhận';
-          // Bắn sự kiện CANCELLED về Service gốc
-          this.natsClient.emit(data.messageName, {
-            ...update_data,
-            newData: { status: 'CANCELLED' },
-          });
-
-          return {
-            ...reject_data,
-            message: 'Đơn này hết hạn rồi admin không duyệt nữa',
-          };
-        }
       }
+      // else {
+      //   const delay = new Date(data.expiresAt).getTime() - Date.now();
+      //   if (delay > 0) {
+      //     return {
+      //       ...update_data,
+      //       message: 'Đã từ chối đơn còn hạn thành công',
+      //     };
+      //   } else {
+      //     const reject_data = await this.approvalRequestModel.findByIdAndUpdate(
+      //       { _id: id },
+      //       {
+      //         status: ApprovalStatus.CANCELLED,
+      //         rejectReason: 'Đơn hết hạn xác nhận',
+      //       },
+      //       { new: true, lean: true },
+      //     );
+
+      //     update_data.status = ApprovalStatus.CANCELLED;
+      //     update_data.rejectReason = 'Đơn hết hạn xác nhận';
+      //     // Bắn sự kiện CANCELLED về Service gốc
+      //     this.natsClient.emit(data.messageName, {
+      //       ...update_data,
+      //       newData: { status: 'CANCELLED' },
+      //     });
+
+      //     return {
+      //       ...reject_data,
+      //       message: 'Đơn này hết hạn rồi admin không duyệt nữa',
+      //     };
+      //   }
+      // }
     }
   }
 }
