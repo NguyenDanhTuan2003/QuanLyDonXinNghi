@@ -399,7 +399,6 @@ autonumber
 actor Admin as 👤 Admin
 participant GW as 🚪 API Gateway
 participant AS as ⚙️ Approval Service
-participant Redis as 🔴 BullMQ (Redis)
 
     Admin->>GW: PATCH /api/approval/:id/approved
     activate GW
@@ -418,10 +417,6 @@ participant Redis as 🔴 BullMQ (Redis)
             GW-->>Admin: 200 OK
         else Còn hạn (delay > 0)
             AS->>AS: 5. Cập nhật APPROVED
-            AS->>Redis: 6. Gửi Job chờ Hết hạn vào Hàng đợi
-            activate Redis
-            Redis-->>AS: Job ID
-            deactivate Redis
             AS-->>GW: Thành công
             GW-->>Admin: 200 OK
         end
@@ -448,13 +443,7 @@ participant AS as ⚙️ Approval Service
         GW-->>Admin: 400 Bad Request
     else Đơn hợp lệ
         AS->>AS: 4. Cập nhật REJECTED
-        AS->>AS: 5. Kiểm tra Hạn duyệt
-        alt Hết hạn (delay <= 0)
-            AS->>AS: 6. Cập nhật CANCELLED & Bắn sự kiện về Service gốc
-            AS-->>GW: Trả về thông báo hết hạn
-        else Còn hạn hoặc Không có hạn
-            AS-->>GW: Trả về thành công
-        end
+        AS-->>GW: Trả về thành công
         GW-->>Admin: 200 OK + Message
     end
     deactivate AS

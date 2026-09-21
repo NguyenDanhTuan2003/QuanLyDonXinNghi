@@ -10,7 +10,6 @@ export class approved_dto {
   @IsOptional()
   newData: { status: string };
   @IsString()
-  @IsString()
   messageName: string;
   @IsString()
   @IsOptional()

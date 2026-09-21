@@ -12,36 +12,12 @@ import { AllExceptionsFilter } from '@app/commons/filters/all-exceptions.filter'
 import { TransformInterceptor } from '@app/commons/interceptors/transform.interceptor';
 import { RedisModule } from '@app/commons/database/redis.module';
 import { LoggerModule } from '@app/commons/loggers/logger.module';
-// import { ConfigModule, ConfigService } from '@nestjs/config';
-// import { BullModule } from '@nestjs/bullmq';
-// import { ApprovalExpirationProcessor } from './approval-expiration.processor';
 @Module({
   imports: [
     LoggerModule.forRoot('APPROVAL-SERVICE'),
     CustomNatsModule,
     AppConfigModule,
-    // BullModule.forRootAsync({
-    //   imports: [ConfigModule],
-    //   inject: [ConfigService],
-    //   useFactory: (configService: ConfigService) => {
-    //     const isTls = configService.get<string>('REDIS_TLS') === 'true';
-
-    //     return {
-    //       connection: {
-    //         host: configService.get<string>('REDIS_HOST'),
-    //         port: Number(configService.get<number>('REDIS_PORT')) || 6379,
-    //         username: 'default',
-    //         password: configService.get<string>('REDIS_PASSWORD'),
-    //         ...(isTls && { tls: {} }),
-    //       },
-    //     };
-    //   },
-    // }),
     RedisModule,
-    // BullModule.registerQueue({
-    //   name: 'approval-expiration-queue',
-    // }),
-
     DatabaseModule,
     MongooseModule.forFeature([
       { name: Approval.name, schema: ApprovalRequestSchema },
@@ -66,7 +42,6 @@ import { LoggerModule } from '@app/commons/loggers/logger.module';
       }),
     },
     ApprovalServiceService,
-    // ApprovalExpirationProcessor,
   ],
 })
 export class ApprovalServiceModule {}
