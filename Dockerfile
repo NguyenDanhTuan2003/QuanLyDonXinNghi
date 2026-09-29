@@ -15,16 +15,17 @@
 
 # Stage 1 : chạy các file cấu hình phục vụ cho việc chỉ móc những file cần thiết ở stage 2 cho nó nhẹ 
 FROM node:25-alpine AS builder
-ARG APP_NAME 
-#biến này sẽ chạy từ dockercompose.yml
-#cái này gọi là image hay còn gọi là máy ảo
+
+#cái file này gọi là image hay còn gọi là máy ảo
 WORKDIR /app
 #cái này dùng để build build xong k cần nữa nên step 2 k dùng đến vì đã lấy được hết các biến và sever đang chạy
 COPY package*.json ./
 #chạy lệnh npm install để cài thư viện
 RUN npm install
-
+#biến này sẽ chạy từ file dockercompose.yml
+ARG APP_NAME 
 COPY . .
+#COPY <nguồn> <đích>. nguồn là copy từ thằng cha của chính file dockerfile này đích là thư mục của docker sao chéo từ đây qua đó
 # chỉ chạy đúng service đang được gọi
 RUN npm run build ${APP_NAME}
 

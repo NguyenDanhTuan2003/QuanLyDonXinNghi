@@ -30,9 +30,9 @@ services:
       args:
         - APP_NAME=api-gateway
     container_name: api-gateway
-    ports:
-    #cổng trước : là cổng gọi ở postman
-      - "3000:3000"
+    # ports:
+    # #cổng trước : là cổng gọi ở postman
+    #   - "3000:3000"
     depends_on:
     #thứ tự chạy ai chạy trước
       - redis
@@ -91,17 +91,42 @@ services:
   # 2. Các cục Database hệ thống
   nats:
     image: nats:latest
-    # Đã XÓA TÊN và XÓA CỔNG. NATS giờ bị nhốt 100% trong Docker.
-    # Nếu cấu hình 
     restart: always
 
   redis:
     image: redis:alpine
-    # Đã XÓA TÊN và XÓA CỔNG. Redis giờ bị nhốt 100% trong Docker.
     command: redis-server --appendonly yes # Bật AOF để lưu dữ liệu liên tục
     volumes:
       - redis_local_data:/data # Ánh xạ volume để không mất dữ liệu
     restart: always
+  
+  nginx: 
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      #volume này có trong đây thì dù có thay đổi nó tự cập nhật luôn 
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./frontend/dist:/usr/share/nginx/html
+    depends_on:
+      - api-gateway
+    restart: always
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: always
+    command:
+      - "http"
+      - "nginx:80"
+      # Thêm cờ này để vượt qua lỗi báo Fake Host của Ngrok
+      - "--host-header=rewrite" 
+    ports:
+      - "4040:4040" # Cổng để xem giao diện quản lý của Ngrok
+    environment:
+    #dùng biến này vì tôi chỉ cho ngrok xem những thứ này thôi
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    depends_on:
+      - nginx
 
 volumes:
   redis_local_data:
