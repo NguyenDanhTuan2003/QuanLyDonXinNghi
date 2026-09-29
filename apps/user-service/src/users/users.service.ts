@@ -9,7 +9,7 @@ import { updateProfileDto } from '@app/commons/dto/userdto/updateprofile.dto';
 import { updatePasswordDto } from '@app/commons/dto/userdto/updatepassword.dto';
 import { createRpcError } from '@app/commons/helpers/throw_nat_custom';
 import { ALL_CUSTOM_RPC_ERRORS } from '@app/commons/enums/rpc/rpc_error.enum';
-
+import { mongoUniversalGet } from '@app/commons/utils/mongo-query.util';
 @Injectable()
 export class UsersService {
   constructor(
@@ -18,34 +18,11 @@ export class UsersService {
   ) {}
 
   async checkprofile(user: IUser) {
-    const data = await this.usermodel.findById(user._id).lean().exec();
-
-    if (!data) {
-      throw createRpcError(ALL_CUSTOM_RPC_ERRORS.USER_NOT_FOUND);
-    }
-
-    const {
-      _id,
-      email,
-      fullname,
-      role,
-      status,
-      phoneNumber,
-      dateOfBirth,
-      department,
-      position,
-    } = data;
-    return {
-      _id,
-      email,
-      fullname,
-      role,
-      status,
-      phoneNumber,
-      dateOfBirth,
-      department,
-      position,
-    };
+    return await mongoUniversalGet<User>(this.usermodel, {
+      where: { _id: user._id },
+      select:
+        '_id email fullname role status phoneNumber dateOfBirth department position',
+    });
   }
 
   private async checkPassword(

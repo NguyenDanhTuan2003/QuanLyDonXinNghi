@@ -3,8 +3,8 @@ import axios from 'axios';
 // 1. TẠO "ĐƯỜNG DÂY NÓNG" (AXIOS INSTANCE)
 // Thay vì mỗi lần gọi API phải gõ url dài, ta tạo sẵn một cục cấu hình mặc định.
 const axiosClient = axios.create({
-  // Địa chỉ gốc của Backend API Gateway
-  baseURL: 'http://localhost:3000/api',
+  // Sử dụng đường dẫn tương đối để tương thích với ngrok. Vite proxy sẽ chuyển hướng '/api' sang backend 'localhost:3000'
+  baseURL: '/api',
 
   // RẤT QUAN TRỌNG: Cho phép đính kèm Cookie vào mỗi Request gửi đi.
   // Nhờ cái này, Backend mới đọc được RefreshToken giấu trong Cookie.
@@ -54,7 +54,7 @@ axiosClient.interceptors.response.use(
       try {
         // TỰ ĐỘNG GỌI API REFRESH:
         const res = await axios.post(
-          'http://localhost:3000/api/auth/refresh',
+          '/api/auth/refresh',
           {},
           { withCredentials: true }, // Bắt buộc để trình duyệt gửi kèm Cookie refreshToken
         );

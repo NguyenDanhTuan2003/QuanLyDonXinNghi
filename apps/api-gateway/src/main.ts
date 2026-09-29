@@ -1,16 +1,15 @@
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-
 import { ApiGatewayModule } from './api-gateway.module';
 import { CustomWinstonLogger } from '@app/commons/loggers/my.logger';
 import cookieParser from 'cookie-parser';
-
+import { ConfigService } from '@nestjs/config';
 async function bootstrap() {
   const app = await NestFactory.create(ApiGatewayModule, {
     bufferLogs: true,
   });
   app.useLogger(new CustomWinstonLogger('GATEWAY'));
-
+  const configService = app.get(ConfigService);
   app.enableCors({
     origin: [
       'http://localhost:3000',
@@ -23,6 +22,7 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   });
   // NATS Listener để nhận các Event (ví dụ: users.profile.approved) bắn Socket về Client
+  // cách viết process.env này có nhược điểm là nếu bên kia là số thì nó sẽ convert sang chuỗi
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.NATS,
     options: {
@@ -34,7 +34,7 @@ async function bootstrap() {
 
   await app.startAllMicroservices();
 
-  const PORT = process.env.PORT || process.env.GATEWAY_PORT || 3000;
+  const PORT = configService.get<number>('gateway') || 3000;
   await app.listen(PORT);
   console.log(`API Gateway is running on: http://localhost:${PORT}`);
 }

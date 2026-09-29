@@ -199,9 +199,7 @@ const Login = () => {
                 {passwordError && <span className="inline-error-text">{passwordError}</span>}
               </div>
 
-              <div className="forgot-password">
-                <a href="#">Quên mật khẩu?</a>
-              </div>
+
 
               <button type="submit" className="btn-signin" disabled={loading}>
                 {loading ? 'Đang xử lý...' : 'Đăng Nhập'}

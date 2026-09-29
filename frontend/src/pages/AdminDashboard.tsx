@@ -83,7 +83,10 @@ const AdminDashboard = () => {
       }
 
       const response = await axiosClient.get('/users/profile');
-      const userData = response.data?.data || response.data;
+      let userData = response.data?.data || response.data;
+      if (Array.isArray(userData) && userData.length > 0) {
+        userData = userData[0];
+      }
       if (userData) {
         setAdminProfile(userData);
         setEditProfileData({
@@ -113,33 +116,102 @@ const AdminDashboard = () => {
         return;
       }
       
-      const params: any = { page, sortby: sort };
-      if (status) params.status = status;
-      if (userId) params.userId = userId;
+      const qPayload: any = { 
+        page, 
+        limit: 10,
+        sort: { createdAt: sort === 'desc' ? -1 : 1 },
+        where: {}
+      };
       
-      if (startDate) {
-        if (startOp === 'eq') params.startDate = startDate;
-        else params.startDate = JSON.stringify({ [startOp]: startDate });
-      }
+      if (status) qPayload.where.status = status;
+      if (userId) qPayload.where.userId = userId;
       
-      if (endDate) {
-        if (endOp === 'eq') params.endDate = endDate;
-        else params.endDate = JSON.stringify({ [endOp]: endDate });
+      const applyDateFilters = (whereObj: any, sVal: string, eVal: string, sOpReq: string, eOpReq: string) => {
+        const sOp = sOpReq === 'eq' ? 'exact' : sOpReq;
+        const eOp = eOpReq === 'eq' ? 'exact' : eOpReq;
+
+        if (sVal && eVal) {
+          const startDayStart = new Date(sVal); startDayStart.setHours(0, 0, 0, 0);
+          const startDayEnd = new Date(sVal); startDayEnd.setHours(23, 59, 59, 999);
+          const endDayStart = new Date(eVal); endDayStart.setHours(0, 0, 0, 0);
+          const endDayEnd = new Date(eVal); endDayEnd.setHours(23, 59, 59, 999);
+
+          if (sOp === 'exact' && eOp === 'exact') {
+            whereObj.$or = [
+              { startDate: { $lte: startDayStart }, endDate: { $gte: startDayEnd } },
+              { startDate: { $lte: endDayStart }, endDate: { $gte: endDayEnd } },
+            ];
+          } else if (sOp === 'gte' && eOp === 'gte') {
+            whereObj.endDate = { $gte: startDayEnd };
+          } else if (sOp === 'lte' && eOp === 'lte') {
+            whereObj.startDate = { $lte: endDayStart };
+          } else if (sOp === 'exact' && eOp === 'gte') {
+            whereObj.$or = [
+              { startDate: { $lte: startDayStart }, endDate: { $gte: startDayEnd } },
+              { endDate: { $gte: endDayEnd } },
+            ];
+          } else if (sOp === 'exact' && eOp === 'lte') {
+            whereObj.$or = [
+              { startDate: { $lte: startDayStart }, endDate: { $gte: startDayEnd } },
+              { startDate: { $lte: endDayEnd } },
+            ];
+          } else if (sOp === 'gte' && eOp === 'exact') {
+            whereObj.$or = [
+              { startDate: { $lte: endDayStart }, endDate: { $gte: endDayEnd } },
+              { endDate: { $gte: startDayEnd } },
+            ];
+          } else if (sOp === 'lte' && eOp === 'exact') {
+            whereObj.$or = [
+              { startDate: { $lte: endDayStart }, endDate: { $gte: endDayEnd } },
+              { startDate: { $lte: endDayStart } },
+            ];
+          } else if (sOp === 'gte' && eOp === 'lte') {
+            whereObj.startDate = { $lte: endDayStart };
+            whereObj.endDate = { $gte: startDayEnd };
+          } else if (sOp === 'lte' && eOp === 'gte') {
+            whereObj.$or = [
+              { endDate: { $gte: endDayEnd } },
+              { startDate: { $lte: endDayStart } },
+            ];
+          }
+        } else if (sVal) {
+          const startDayStart = new Date(sVal); startDayStart.setHours(0, 0, 0, 0);
+          const startDayEnd = new Date(sVal); startDayEnd.setHours(23, 59, 59, 999);
+          if (sOp === 'exact') {
+            whereObj.startDate = { $lte: startDayEnd };
+            whereObj.endDate = { $gte: startDayStart };
+          } else if (sOp === 'gte') {
+            whereObj.endDate = { $gte: startDayStart };
+          } else if (sOp === 'lte') {
+            whereObj.startDate = { $lte: startDayEnd };
+          }
+        } else if (eVal) {
+          const endDayStart = new Date(eVal); endDayStart.setHours(0, 0, 0, 0);
+          const endDayEnd = new Date(eVal); endDayEnd.setHours(23, 59, 59, 999);
+          if (eOp === 'exact') {
+            whereObj.startDate = { $lte: endDayEnd };
+            whereObj.endDate = { $gte: endDayStart };
+          } else if (eOp === 'gte') {
+            whereObj.endDate = { $gte: endDayStart };
+          } else if (eOp === 'lte') {
+            whereObj.startDate = { $lte: endDayEnd };
+          }
+        }
+      };
+
+      if (startDate || endDate) {
+        applyDateFilters(qPayload.where, startDate, endDate, startOp, endOp);
       }
 
-      const response = await axiosClient.get('/leave-request/admin/getall', { params });
-      const payload = response.data.data || response.data;
+      const response = await axiosClient.get('/leave-request/admin/getall', { 
+        params: { q: JSON.stringify(qPayload) }
+      });
+      const payload = response.data?.data || response.data;
       
-      if (payload && Array.isArray(payload.items)) {
-        console.log("PAYLOAD HAS ITEMS:", payload);
-        setRequests(payload.items);
-        setTotalPages(payload.totalPages || 1);
-      } else {
-        console.log("PAYLOAD IS ARRAY DIRECTLY:", payload);
-        setRequests(Array.isArray(payload) ? payload : []);
-        setTotalPages(response.data.totalPages || 1);
-      }
-      
+      const items = Array.isArray(payload) ? payload : (payload?.items || []);
+      setRequests(items);
+      // Giả lập tổng số trang
+      setTotalPages(items.length === 10 ? page + 1 : page);
       setCurrentPage(page);
     } catch (error) {
       console.error("Lỗi khi tải danh sách đơn admin:", error);

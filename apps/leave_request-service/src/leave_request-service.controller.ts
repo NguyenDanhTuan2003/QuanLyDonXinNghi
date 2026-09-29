@@ -2,10 +2,7 @@ import { Controller } from '@nestjs/common';
 import { LeaveRequestServiceService } from './leave_request-service.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CreateLeaveRequestPayloadDto } from '@app/commons/dto/leave_requestdto/leave_payload.dto';
-import { payloadleave_reqDto } from '@app/commons/dto/leave_requestdto/LeaveRequestQuery.dto';
-import { Adminpayloadleave_reqDto } from '@app/commons/dto/leave_requestdto/Admin_leaverequestDto';
 import { RejectLeaveRequestDto } from '@app/commons/dto/leave_requestdto/RejectLeaveRequest.dto';
-import { leaveDetailDto } from '@app/commons/dto/leave_requestdto/leave_request_detail.dto';
 
 @Controller()
 export class LeaveRequestServiceController {
@@ -18,18 +15,29 @@ export class LeaveRequestServiceController {
     return this.leaveRequestServiceService.createLeaveRequest(payload);
   }
   @MessagePattern('leave_request.getall')
-  getLeaveRequestByUser(@Payload() payload: payloadleave_reqDto) {
-    return this.leaveRequestServiceService.getLeaveRequestByUser(payload);
+  getLeaveRequestByUser(
+    @Payload('userId') userId: string,
+    @Payload('query') query: string | Record<string, unknown>,
+  ) {
+    return this.leaveRequestServiceService.getLeaveRequestByUser(userId, query);
   }
   @MessagePattern('admin_leave_request.getall')
   getLeaveRequestByAdmin(
-    @Payload() payload: Adminpayloadleave_reqDto,
+    @Payload('query') query: string | Record<string, unknown>,
   ): Promise<any> {
-    return this.leaveRequestServiceService.getLeaveRequestByAdmin(payload);
+    return this.leaveRequestServiceService.getLeaveRequestByAdmin(query);
   }
   @MessagePattern('leave_request.detail')
-  getDetailLeaveRequest(@Payload() payload: leaveDetailDto) {
-    return this.leaveRequestServiceService.getDetailLeaveRequest(payload);
+  getDetailLeaveRequest(
+    @Payload('userId') userId: string,
+    @Payload('role') role: string,
+    @Payload('requestId') requestId: string,
+  ) {
+    return this.leaveRequestServiceService.getDetailLeaveRequest(
+      userId,
+      role,
+      requestId,
+    );
   }
   @MessagePattern('leave_request.cancel')
   cancelLeaveRequest(@Payload() payload: RejectLeaveRequestDto) {

@@ -13,6 +13,7 @@ import { CustomNatsClient } from '@app/commons/custom_natsclient_traceid/custom-
 import { approval_request_saveDB_dto } from '@app/commons/dto/aprovaldto/approval_request_saveDB.dto';
 import { firstValueFrom } from 'rxjs';
 import { ALL_CUSTOM_RPC_ERRORS } from '@app/commons/enums/rpc/rpc_error.enum';
+import { mongoUniversalGet } from '@app/commons/utils/mongo-query.util';
 
 @Injectable()
 export class ApprovalServiceService {
@@ -100,7 +101,9 @@ export class ApprovalServiceService {
   }
 
   async getallaproval() {
-    return this.approvalRequestModel.find({ status: ApprovalStatus.PENDING });
+    return mongoUniversalGet(this.approvalRequestModel, {
+      where: { status: ApprovalStatus.PENDING },
+    });
   }
 
   async cancel_approval(id_req: string, userEmail: string, reason?: string) {

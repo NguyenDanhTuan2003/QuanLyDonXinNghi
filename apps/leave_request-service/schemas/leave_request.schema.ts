@@ -9,10 +9,10 @@ export class LeaveRequest {
   @Prop({ type: String })
   userId: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, type: Date })
   startDate: Date;
 
-  @Prop({ required: true })
+  @Prop({ required: true, type: Date })
   endDate: Date;
 
   @Prop({ required: true })
@@ -32,10 +32,13 @@ export class LeaveRequest {
   @Prop()
   processedBy: string;
 
-  @Prop()
+  @Prop({ type: Date })
   processedAt: Date;
 
+  @Prop({ type: Date })
   createdAt: Date;
+
+  @Prop({ type: Date })
   updatedAt: Date;
 }
 

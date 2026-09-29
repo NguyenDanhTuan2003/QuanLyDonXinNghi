@@ -1,20 +1,104 @@
 version: '3.8'
 
+# =========================================================================================
+# 📚 TỪ ĐIỂN CÁC TỪ KHÓA CẤU HÌNH TRONG DOCKER-COMPOSE (CHEAT SHEET)
+# =========================================================================================
+# 1. image          : Tải một "máy ảo đúc sẵn" từ trên mạng (Docker Hub) về xài luôn (Vd: redis, postgres).
+# 2. build          : Tự lấy file Dockerfile của mình ra để đúc thành một máy ảo mới.
+# 3. ports          : Mở cửa thông ra ngoài. Quy tắc "Cổng_Máy_Thật : Cổng_Máy_Ảo".
+# 4. depends_on     : Xác định thứ tự chạy. (Vd: Bắt thằng Redis phải chạy lên trước rồi mới tới mình).
+# 5. restart        : Cơ chế hồi sinh. (Vd: 'always' -> Lỡ code bị crash sập máy ảo thì Docker tự bật lại).
+# 6. volumes        : Cắm USB/Ổ cứng ngoài vào máy ảo. 
+#                     - Dùng để giữ lại dữ liệu khi máy ảo bị xóa (như Database).
+#                     - Hoặc dùng để mount code từ máy thật vào (để code tới đâu ăn ngay tới đó).
+# 7. environment    : Khai báo trực tiếp các biến môi trường (Vd: - NODE_ENV=production).
+# 8. env_file       : Thay vì khai báo từng dòng, nhét nguyên cái file .env vào máy ảo luôn cho lẹ.
+# 9. command        : Ép máy ảo chạy một lệnh cụ thể, GHI ĐÈ luôn cái lệnh CMD mặc định trong Dockerfile.
+# 10. container_name: Đặt tên cho máy ảo (để lúc gõ 'docker ps' hoặc xem Log nhìn cho đẹp, không bị random).
+# 11. networks      : Tạo một mạng LAN riêng biệt, ép các máy ảo vào chung 1 phòng kín để nói chuyện với nhau.
+# =========================================================================================
+
+
+## vì trên local tôi đang mượn 1 cổng duy nhất là 4222 để dùng nên chỉ chạy cho 1 dự án còn khi lấy cổng bên ngoài thì nó chỉ là gửi gói tin cho mạng chứ chả nói j tới
+## cổng của hệ điều hành hay dùng cổng của hệ điều hành vì dành động gửi tin thì ô có tin giống nhau cũng k bị cấm
 services:
+  # 1. API Gateway Service
+  # mỗi 1 cài trong này là 1 container bản chất của container được lấy cảm hứng từ các thùng hàng trên cảng biển nên vì vậy khi deploy k phải hì học build từng thứ chỉ cần ném hết vào các thùng hàng rồi bê lên tàu thôi
+  api-gateway:
+    build: 
+      context: .
+      args:
+        - APP_NAME=api-gateway
+    container_name: api-gateway
+    ports:
+    #cổng trước : là cổng gọi ở postman
+      - "3000:3000"
+    depends_on:
+    #thứ tự chạy ai chạy trước
+      - redis
+      - nats
+    env_file:
+      - .env
+    restart: always
+
+  users-service:
+    build: 
+      context: .
+      args:
+        - APP_NAME=user-service
+    container_name: user-service
+    ports:
+      - "3002:3002" # Mở cổng ra máy thật để bạn test API bằng Postman/Trình duyệt
+    depends_on:
+      - redis
+      - nats
+    env_file:
+      - .env
+    restart: always
+
+  # tên này là tên tự do để phân biệt các service với nhau
+  leave_request-service:
+    build: 
+      context: .
+      args:
+        - APP_NAME=leave_request-service
+    container_name: leave_request-service
+    ports:
+      - "3004:3004" # Mở cổng ra máy thật để bạn test API bằng Postman/Trình duyệt
+    depends_on:
+      - redis
+      - nats
+    env_file:
+      - .env
+    restart: always
+
+  approval-service:
+    build: 
+      context: .
+      args:
+        - APP_NAME=approval-service
+    container_name: approval-service
+    ports:
+      # cổng 3000 trước : là cổng khi gọi trên url vd: http://localhost:3000
+      - "3003:3003" # Mở cổng ra máy thật để bạn test API bằng Postman/Trình duyệt
+    depends_on:
+      - redis
+      - nats
+    env_file:
+      - .env
+    restart: always
+# mỗi 1 service sẽ chạy docker file 1 lần
+  # 2. Các cục Database hệ thống
   nats:
     image: nats:latest
-    container_name: nats-server
-    ports:
-      - "4222:4222"
-      - "8222:8222"
+    # Đã XÓA TÊN và XÓA CỔNG. NATS giờ bị nhốt 100% trong Docker.
+    # Nếu cấu hình 
     restart: always
 
   redis:
     image: redis:alpine
-    container_name: redis-local
+    # Đã XÓA TÊN và XÓA CỔNG. Redis giờ bị nhốt 100% trong Docker.
     command: redis-server --appendonly yes # Bật AOF để lưu dữ liệu liên tục
-    ports:
-      - "6379:6379"
     volumes:
       - redis_local_data:/data # Ánh xạ volume để không mất dữ liệu
     restart: always

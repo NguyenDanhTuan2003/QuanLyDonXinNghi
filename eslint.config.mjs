@@ -32,4 +32,17 @@
         "prettier/prettier": ["error", { endOfLine: "auto" }],
       },
     },
+    // TypeORM's recursive conditional generic types (FindOptionsWhere<T>, FindOptionsOrder<T>, …)
+    // cannot be fully resolved by ESLint's type checker when T is an uninstantiated generic.
+    // The resulting "error"-typed values trigger false-positive no-unsafe-* rules in this file only.
+    {
+      files: ['libs/commons/src/utils/typeorm-query.util.ts'],
+      rules: {
+        '@typescript-eslint/no-unsafe-assignment': 'off',
+        '@typescript-eslint/no-unsafe-call': 'off',
+        '@typescript-eslint/no-unsafe-member-access': 'off',
+        '@typescript-eslint/no-unsafe-return': 'off',
+        '@typescript-eslint/no-redundant-type-constituents': 'off',
+      },
+    },
   );

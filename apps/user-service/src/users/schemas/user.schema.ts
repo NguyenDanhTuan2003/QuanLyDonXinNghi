@@ -21,8 +21,8 @@ export class User {
   status: string;
   @Prop()
   phoneNumber: string;
-  @Prop()
-  dateOfBirth: string;
+  @Prop({ type: Date })
+  dateOfBirth: Date;
   @Prop()
   department: string;
   @Prop()

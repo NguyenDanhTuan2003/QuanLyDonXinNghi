@@ -77,7 +77,10 @@ const UserDashboard = () => {
 
     try {
       const response = await axiosClient.get('/users/profile');
-      const userData = response.data?.data || response.data;
+      let userData = response.data?.data || response.data;
+      if (Array.isArray(userData) && userData.length > 0) {
+        userData = userData[0];
+      }
       if (userData) {
         setUserProfile(userData);
         // Format lại ngày sinh để hiển thị đúng trong ô input type="date" (YYYY-MM-DD)
@@ -99,19 +102,24 @@ const UserDashboard = () => {
 
   const fetchLeaveRequests = async (page: number, status = filterStatus, sort = sortBy) => {
     try {
-      const params: any = { page, sortby: sort };
-      if (status) params.status = status;
-
-      const response = await axiosClient.get('/leave-request/getall', { params });
-      const payload = response.data.data || response.data;
-      
-      if (payload && Array.isArray(payload.items)) {
-        setLeaveRequests(payload.items);
-        setTotalPages(payload.totalPages || 1);
-      } else {
-        setLeaveRequests(Array.isArray(payload) ? payload : []);
-        setTotalPages(response.data.totalPages || 1);
+      const qPayload: any = { 
+        page, 
+        limit: 10,
+        sort: { createdAt: sort === 'desc' ? -1 : 1 }
+      };
+      if (status) {
+        qPayload.where = { status };
       }
+
+      const response = await axiosClient.get('/leave-request/getall', { 
+        params: { q: JSON.stringify(qPayload) }
+      });
+      const payload = response.data?.data || response.data;
+      
+      const items = Array.isArray(payload) ? payload : (payload?.items || []);
+      setLeaveRequests(items);
+      // Giả lập tổng số trang vì mongoUniversalGet không trả về totalPages
+      setTotalPages(items.length === 10 ? page + 1 : page);
       setCurrentPage(page);
     } catch (error) {
       console.error("Lỗi khi tải danh sách đơn:", error);
