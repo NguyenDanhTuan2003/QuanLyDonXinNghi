@@ -13,6 +13,10 @@ import { Model, PopulateOptions } from 'mongoose';
 // ============================================================================
 const MAX_DEPTH = 8;
 const MAX_ARRAY_LENGTH = 100;
+const MAX_KEYS = 50; // Ngăn chặn nhồi nhét quá nhiều key làm treo CPU
+const MAX_REGEX_LENGTH = 100; // Ngăn chặn Regex quá dài (ReDoS)
+
+const BLOCKED_KEYS = new Set(['__proto__', 'constructor', 'prototype']); // Chống Prototype Pollution
 
 const ALLOWED_OPERATORS = new Set([
   '$eq',
@@ -99,8 +103,25 @@ const processMongoOperators = (queryObj: unknown): Record<string, unknown> => {
         }
       }
     } else if (isPlainObject(source) && isPlainObject(target)) {
+      const keys = Object.keys(source);
+      if (keys.length > MAX_KEYS) {
+        throw new Error('Object too wide');
+      }
+
       for (const [key, value] of Object.entries(source)) {
+        // Chặn prototype pollution
+        if (BLOCKED_KEYS.has(key)) continue;
+
         if (key.startsWith('$') && !ALLOWED_OPERATORS.has(key)) continue;
+
+        // Vá lỗi ReDoS: Chặn biểu thức chính quy quá dài do người dùng gửi
+        if (
+          key === '$regex' &&
+          typeof value === 'string' &&
+          value.length > MAX_REGEX_LENGTH
+        ) {
+          throw new Error('Regex pattern is too long, possible ReDoS attack');
+        }
 
         if (isPlainObject(value)) {
           const newTarget: Record<string, unknown> = {};
@@ -168,7 +189,10 @@ export async function mongoUniversalGet<T>(
       }
 
       if (parsedPayload.page) page = Number(parsedPayload.page) || page;
-      if (parsedPayload.limit) limit = Number(parsedPayload.limit) || limit;
+      if (parsedPayload.limit) {
+        // Chặn người dùng gửi limit quá lớn (tránh Out of Memory)
+        limit = Math.min(Number(parsedPayload.limit) || limit, 100);
+      }
       if (parsedPayload.sort) sort = parsedPayload.sort;
       if (parsedPayload.select) select = parsedPayload.select;
       if (parsedPayload.populate) populate = parsedPayload.populate;

@@ -65,6 +65,23 @@ interface StackItem {
  * qua object where mà client gửi lên, lọc bỏ các key nguy hiểm
  * (__proto__, constructor, prototype) và các key bắt đầu bằng '$'.
  */
+// //
+// tóm gon logic trong 5 bước sau làm sao để lấy đc mảng cuối cùng chứa giá trị hợp lệ
+//  1. result tổng (chưa có gì)
+// const result = {};
+
+// // 2. Tạo một task rỗng
+// const newTarget = {};
+
+// // 3. (Dòng 109): Nối dây từ task rỗng sang result tổng
+// result["department"] = newTarget;
+
+// // 4. (Vòng lặp sau): Bơm data vào task
+// newTarget["name"] = "IT";
+
+// // 5. Lúc return, result TỰ ĐỘNG có data mà KHÔNG HỀ GỘP!
+// console.log(result); // In ra: { department: { name: "IT" } }
+
 const processWhereObject = (queryObj: unknown): Record<string, unknown> => {
   if (!isPlainObject(queryObj)) return {};
 
@@ -123,14 +140,30 @@ const processWhereObject = (queryObj: unknown): Record<string, unknown> => {
 };
 
 /**
- * Lọc danh sách relations mà client gửi lên.
+ * Lọc danh sách relations mà client gửi lên tức là join đấy.
  * Chỉ cho phép các string thuần (chỉ chứa chữ, số, dấu gạch dưới và dấu chấm).
+ * hàm test dùng để chuẩn biểu thức chính quy
  */
-const sanitizeRelations = (relations: unknown): string[] => {
+const sanitizeRelations = (
+  //Quy định join qua các relation cho phép
+  relations: unknown,
+  allowedRelations?: string[],
+  maxDepth: number = 2,
+): string[] => {
+  // Kiểm tra đầu vào có phải là mảng không vì nếu nó là object thì k có for of gây lỗi
   if (!Array.isArray(relations)) return [];
   const safe: string[] = [];
   for (const rel of relations) {
     if (typeof rel === 'string' && /^[a-zA-Z0-9_.]+$/.test(rel)) {
+      // 1. Chống DoS (Vòng lặp JOIN vô tận): Giới hạn độ sâu khi người dùng lợi dụng lỗ hổng join cứ . làm treo hệ thống
+      const depth = rel.split('.').length - 1;
+      if (depth > maxDepth) continue;
+
+      // 2. Chống lộ dữ liệu (Whitelist): Chỉ cho phép các relation đã được phép
+      if (allowedRelations && allowedRelations.length > 0) {
+        if (!allowedRelations.includes(rel)) continue;
+      }
+
       safe.push(rel);
     }
   }
@@ -139,13 +172,23 @@ const sanitizeRelations = (relations: unknown): string[] => {
 
 /**
  * Lọc danh sách select fields mà client gửi lên.
+ * Dùng hàm này thì ở service phải quy định thêm danh sách các field cho phép tránh lộ dữ liệu nhạy cảm
  * Chỉ cho phép các string thuần (chỉ chứa chữ, số, dấu gạch dưới và dấu chấm).
  */
-const sanitizeSelect = (select: unknown): string[] => {
+const sanitizeSelect = (
+  // Quy định các trường được phép select
+  select: unknown,
+  allowedSelects?: string[],
+): string[] => {
   if (!Array.isArray(select)) return [];
   const safe: string[] = [];
   for (const field of select) {
     if (typeof field === 'string' && /^[a-zA-Z0-9_.]+$/.test(field)) {
+      // Chống lộ dữ liệu (Whitelist)
+      if (allowedSelects && allowedSelects.length > 0) {
+        if (!allowedSelects.includes(field)) continue;
+      }
+
       safe.push(field);
     }
   }
@@ -211,8 +254,11 @@ const buildOrder = <T extends ObjectLiteral>(
 };
 
 /**
- * Build FindOptionsSelect<T> từ mảng string cột cần lấy.
- * TypeORM chấp nhận object { field: true } làm select.
+ * từ bản type orm mới nhất các trường select gửi lên phải có value là true thì nó mới cho select vd:  select: {
+    id: true,
+    name: true,
+    email: true
+  }nhưng người dùng gửi lên select chỉ có value là string vd: select: ["id", "name", "email"]
  */
 const buildSelect = <T extends ObjectLiteral>(
   fields: string[],
@@ -225,9 +271,7 @@ const buildSelect = <T extends ObjectLiteral>(
 };
 
 /**
- * Build FindOptionsRelations<T> từ mảng string relation.
- * Hỗ trợ nested relation 1 cấp: 'department.manager' → { department: { manager: true } }
- */
+ * Cũng giống hàm build trên các trường phải là true và join thì cũng phải khai báo rõ thuộc tính bên trong là true thì hàm này hỗ trợ sau dẫu chấm 1 cấp thôi */
 const buildRelations = <T extends ObjectLiteral>(
   relations: string[],
 ): FindOptionsRelations<T> => {
@@ -250,9 +294,9 @@ const buildRelations = <T extends ObjectLiteral>(
 /**
  * Hàm universal query cho TypeORM — tương đương mongoUniversalGet cho Mongoose.
  *
- * @param repository     Repository<T> của entity cần query
- * @param payload        Payload từ client (string JSON hoặc plain object)
- * @param defaultOptions Options mặc định (where, page, limit, sort, select, relations)
+ * @param repository     database nào
+ * @param payload        Dữ liệu frontend gửi lên
+ * @param defaultOptions Có thể là điều kiện relation tự truyền và các file join được phép truy vấn và có thể quy định user id nào được phép truy vấn
  * @returns              Mảng entity tìm được, hoặc [] nếu có lỗi
  *
  * @example
@@ -265,19 +309,28 @@ const buildRelations = <T extends ObjectLiteral>(
 export async function typeormUniversalGet<T extends ObjectLiteral>(
   repository: Repository<T>,
   payload?: string | Record<string, unknown>,
-  defaultOptions?: Partial<TypeormQueryPayload>,
+  defaultOptions?: Partial<TypeormQueryPayload> & {
+    allowedSelects?: string[];
+    allowedRelations?: string[];
+    maxRelationDepth?: number;
+  },
 ): Promise<T[]> {
   try {
-    // --- Khởi tạo giá trị từ defaultOptions (dùng Record để tránh unresolvable generic types) ---
+    // --- Khởi tạo giá trị từ defaultOptions
     let whereRaw: Record<string, unknown> = defaultOptions?.where ?? {};
     let page = defaultOptions?.page ?? 1;
     let limit = defaultOptions?.limit ?? 20;
     let sortRaw: Record<string, 'ASC' | 'DESC'> = defaultOptions?.sort
       ? (buildOrder(defaultOptions.sort) as Record<string, 'ASC' | 'DESC'>)
       : { id: 'DESC' };
-    let selectFields: string[] = sanitizeSelect(defaultOptions?.select ?? []);
+    let selectFields: string[] = sanitizeSelect(
+      defaultOptions?.select ?? [],
+      defaultOptions?.allowedSelects,
+    );
     let relationsList: string[] = sanitizeRelations(
       defaultOptions?.relations ?? [],
+      defaultOptions?.allowedRelations,
+      defaultOptions?.maxRelationDepth,
     );
 
     // --- Parse và merge payload từ client ---
@@ -311,12 +364,19 @@ export async function typeormUniversalGet<T extends ObjectLiteral>(
       }
 
       if (parsedPayload.select) {
-        const safe = sanitizeSelect(parsedPayload.select);
+        const safe = sanitizeSelect(
+          parsedPayload.select,
+          defaultOptions?.allowedSelects,
+        );
         if (safe.length > 0) selectFields = safe;
       }
 
       if (parsedPayload.relations) {
-        const safe = sanitizeRelations(parsedPayload.relations);
+        const safe = sanitizeRelations(
+          parsedPayload.relations,
+          defaultOptions?.allowedRelations,
+          defaultOptions?.maxRelationDepth,
+        );
         if (safe.length > 0) relationsList = safe;
       }
     }
