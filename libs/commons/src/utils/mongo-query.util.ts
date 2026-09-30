@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { Model, PopulateOptions } from 'mongoose';
 
 /**
@@ -216,7 +217,12 @@ export async function mongoUniversalGet<T>(
     }
     const result = await query.exec();
     return result || [];
-  } catch {
+  } catch (error) {
+    Logger.error(
+      'Lỗi khi thực thi mongoUniversalGet',
+      error instanceof Error ? error.stack : String(error),
+      'MongoQueryUtil',
+    );
     return [];
   }
 }

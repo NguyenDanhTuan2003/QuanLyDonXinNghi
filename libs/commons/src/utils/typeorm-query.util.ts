@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import {
   Repository,
   FindOptionsWhere,
@@ -401,7 +402,12 @@ export async function typeormUniversalGet<T extends ObjectLiteral>(
 
     const result = await repository.find(findOptions);
     return result ?? [];
-  } catch {
+  } catch (error) {
+    Logger.error(
+      'Lỗi khi thực thi typeormUniversalGet',
+      error instanceof Error ? error.stack : String(error),
+      'TypeormQueryUtil',
+    );
     return [];
   }
 }
