@@ -139,40 +139,47 @@ export class CustomWinstonLogger implements LoggerService {
       ),
       transports: [
         new winston.transports.Console({
-          format: winston.format.combine(
-            winston.format.colorize({ all: true }),
-            winston.format.printf((info: LogInfo) => {
-              const {
-                timestamp,
-                level,
-                message,
-                context,
-                stack,
-                trace_id,
-                _id,
-                service_name,
-              } = info;
-              //này là spread operator để gom các giá trị lại hay bị nhầm lần là gom lại
+          format:
+            process.env.NODE_ENV === 'production'
+              ? winston.format.json()
+              : winston.format.combine(
+                  winston.format.colorize({ all: true }),
+                  winston.format.printf((info: LogInfo) => {
+                    const {
+                      timestamp,
+                      level,
+                      message,
+                      context,
+                      stack,
+                      trace_id,
+                      _id,
+                      service_name,
+                    } = info;
+                    //này là spread operator để gom các giá trị lại hay bị nhầm lần là gom lại
 
-              const timeStr = safeString(timestamp);
-              const levelStr = safeString(level);
-              const svcStr = `[${safeString(service_name || 'App')}]`;
-              const ctxStr = context ? `[${safeString(context)}]` : '[App]';
-              const traceStr = `[TraceID: ${safeString(trace_id)}]`;
-              const userStr =
-                _id && _id !== 'anonymous' ? `[User: ${safeString(_id)}]` : '';
-              const stackStr = stack ? `\n${safeString(stack)}` : '';
+                    const timeStr = safeString(timestamp);
+                    const levelStr = safeString(level);
+                    const svcStr = `[${safeString(service_name || 'App')}]`;
+                    const ctxStr = context
+                      ? `[${safeString(context)}]`
+                      : '[App]';
+                    const traceStr = `[TraceID: ${safeString(trace_id)}]`;
+                    const userStr =
+                      _id && _id !== 'anonymous'
+                        ? `[User: ${safeString(_id)}]`
+                        : '';
+                    const stackStr = stack ? `\n${safeString(stack)}` : '';
 
-              let msgStr = '';
-              if (typeof message === 'object' && message !== null) {
-                msgStr = JSON.stringify(message, null, 2);
-              } else {
-                msgStr = safeString(message);
-              }
+                    let msgStr = '';
+                    if (typeof message === 'object' && message !== null) {
+                      msgStr = JSON.stringify(message, null, 2);
+                    } else {
+                      msgStr = safeString(message);
+                    }
 
-              return `${svcStr} ${timeStr} [${levelStr}] ${ctxStr} ${traceStr}${userStr}: ${msgStr}${stackStr}`;
-            }),
-          ),
+                    return `${svcStr} ${timeStr} [${levelStr}] ${ctxStr} ${traceStr}${userStr}: ${msgStr}${stackStr}`;
+                  }),
+                ),
         }),
 
         // File Log tổng

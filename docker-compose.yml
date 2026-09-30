@@ -40,6 +40,8 @@ services:
     env_file:
       - .env
     restart: always
+    volumes:
+      - ./app-logs/api-gateway:/app/logs
 
   users-service:
     build: 
@@ -55,6 +57,8 @@ services:
     env_file:
       - .env
     restart: always
+    volumes:
+      - ./app-logs/user-service:/app/logs
 
   # tên này là tên tự do để phân biệt các service với nhau
   leave_request-service:
@@ -71,6 +75,8 @@ services:
     env_file:
       - .env
     restart: always
+    volumes:
+      - ./app-logs/leave_request-service:/app/logs
 
   approval-service:
     build: 
@@ -87,6 +93,8 @@ services:
     env_file:
       - .env
     restart: always
+    volumes:
+      - ./app-logs/approval-service:/app/logs
 # mỗi 1 service sẽ chạy docker file 1 lần
   # 2. Các cục Database hệ thống
   nats:
