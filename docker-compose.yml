@@ -125,9 +125,7 @@ services:
     restart: always
     command:
       - "http"
-      - "nginx:80"
-      # Thêm cờ này để vượt qua lỗi báo Fake Host của Ngrok
-      - "--host-header=rewrite" 
+      - "nginx:80" 
     ports:
       - "4040:4040" # Cổng để xem giao diện quản lý của Ngrok
     environment:
